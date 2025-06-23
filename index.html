@@ -6,11 +6,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <style>
         body { margin: 0; background: black; color: white; font-family: sans-serif; text-align: center; }
-        #puzzle { display: grid; margin: 10px auto; touch-action: none; grid-template-columns: repeat(5, 64px); grid-gap: 2px; }
-        .piece { width: 64px; height: 64px; touch-action: none; cursor: grab; }
+        #puzzle {
+            display: grid;
+            margin: 10px auto;
+            grid-template-columns: repeat(5, 64px);
+            grid-gap: 2px;
+            touch-action: none;
+            width: max-content;
+        }
+        .piece {
+            width: 64px;
+            height: 64px;
+            cursor: grab;
+            touch-action: none;
+            user-select: none;
+        }
         @media (min-width: 600px) {
-            #puzzle { grid-template-columns: repeat(5, 96px); grid-gap: 3px; }
-            .piece { width: 96px; height: 96px; }
+            #puzzle {
+                grid-template-columns: repeat(5, 96px);
+                grid-gap: 3px;
+            }
+            .piece {
+                width: 96px;
+                height: 96px;
+            }
         }
         #message { display: none; margin-top: 20px; font-size: 1.2em; color: #ffcccc; }
         #shuffleButton {
@@ -35,33 +54,32 @@
     const size = 5;
     const container = document.getElementById('puzzle');
     const shuffleButton = document.getElementById('shuffleButton');
+
+    // Puzzle parçalarını satır ve sütun bilgisiyle oluştur
     let pieces = [];
-    let dragSrcEl = null;
-
-    container.style.gridTemplateColumns = `repeat(${size}, auto)`;
-
     for (let row = 0; row < size; row++) {
         for (let col = 0; col < size; col++) {
             pieces.push({ row, col, src: `img/piece_${row}_${col}.png` });
         }
     }
 
-    // Başlangıçta parçalar sıralı şekilde eklenecek (karışık değil)
+    // Puzzle'ı düzgün sıralı şekilde çiz
     function renderPieces(arr) {
         container.innerHTML = '';
         arr.forEach(({ src }, index) => {
-            const img = document.createElement("img");
+            const img = document.createElement('img');
             img.src = src;
-            img.className = "piece";
+            img.className = 'piece';
             img.draggable = true;
             img.dataset.index = index;
             container.appendChild(img);
         });
     }
 
+    // Başlangıçta düzgün sırayla yükle (bileşik)
     renderPieces(pieces);
 
-    // Shuffle fonksiyonu
+    // Karıştırma fonksiyonu (Fisher-Yates)
     function shuffle(array) {
         for (let i = array.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
@@ -69,24 +87,24 @@
         }
     }
 
-    // Drag and Drop eventleri - sadece shuffle sonrası aktif olacak
+    let dragSrcEl = null;
+
+    // Drag & Drop eventlerini ayarla
     function enableDragAndDrop() {
-        container.addEventListener("dragstart", e => {
+        container.addEventListener('dragstart', e => {
             if (!e.target.classList.contains('piece')) return;
             dragSrcEl = e.target;
         });
 
-        container.addEventListener("dragover", e => {
+        container.addEventListener('dragover', e => {
             e.preventDefault();
         });
 
-        container.addEventListener("drop", e => {
+        container.addEventListener('drop', e => {
             e.preventDefault();
             if (!e.target.classList.contains('piece')) return;
-
             if (dragSrcEl === e.target) return;
 
-            // Parçaların yerlerini değiştir
             const children = Array.from(container.children);
             const dragIndex = children.indexOf(dragSrcEl);
             const dropIndex = children.indexOf(e.target);
@@ -102,26 +120,25 @@
         });
     }
 
-    // Puzzle çözüldü mü kontrolü
+    // Puzzle çözümünü kontrol et
     function checkSolved() {
         const current = [...container.children];
-        // Doğru sıralı halini bul
+        // Orijinal sıralı hal
         const correct = [...current].slice().sort((a, b) => a.src.localeCompare(b.src));
         const isSolved = current.every((el, i) => el.src === correct[i].src);
         if (isSolved) {
-            document.getElementById("message").style.display = "block";
-            shuffleButton.style.display = "none";
+            document.getElementById('message').style.display = 'block';
+            shuffleButton.style.display = 'none';
         }
     }
 
-    // Buton ile karıştırma ve sürüklemeyi aktif et
+    // Butona tıklayınca puzzle karışsın ve drag-drop aktif olsun
     shuffleButton.addEventListener('click', () => {
         shuffle(pieces);
         renderPieces(pieces);
         enableDragAndDrop();
         shuffleButton.style.display = 'none';
     });
-
 </script>
 </body>
 </html>
