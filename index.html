@@ -1,0 +1,85 @@
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Sürpriz Puzzle</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { margin: 0; background: black; color: white; font-family: sans-serif; text-align: center; }
+        #puzzle { display: grid; margin: 10px auto; touch-action: none; }
+        .piece { width: 64px; height: 64px; touch-action: none; }
+        #message { display: none; margin-top: 20px; font-size: 1.2em; color: #ffcccc; }
+        @media (min-width: 600px) {
+            .piece { width: 96px; height: 96px; }
+        }
+    </style>
+</head>
+<body>
+    <h2>🧩 Puzzle'ı Tamamla</h2>
+    <div id="puzzle"></div>
+    <div id="message">💌 Bebeğim senden çok özür dilerim umarım bu bir nebze olsun hatamı telafi etmiştir...</div>
+<script>
+    const size = 5;
+    const container = document.getElementById('puzzle');
+    container.style.gridTemplateColumns = `repeat(${size}, auto)`;
+    const pieces = [];
+    for (let row = 0; row < size; row++) {
+        for (let col = 0; col < size; col++) {
+            pieces.push({ row, col, src: `img/piece_${row}_${col}.png` });
+        }
+    }
+
+    // Parçaları karıştır
+    function shuffle(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+    }
+
+    shuffle(pieces);
+
+    pieces.forEach(({ src }, index) => {
+        const img = document.createElement("img");
+        img.src = src;
+        img.className = "piece";
+        img.draggable = true;
+        img.dataset.index = index;
+        container.appendChild(img);
+    });
+
+    let dragSrcEl = null;
+
+    container.addEventListener("dragstart", e => {
+        dragSrcEl = e.target;
+    });
+
+    container.addEventListener("dragover", e => {
+        e.preventDefault();
+    });
+
+    container.addEventListener("drop", e => {
+        e.preventDefault();
+        if (e.target.className !== "piece") return;
+        const temp = document.createElement("div");
+        container.insertBefore(temp, dragSrcEl);
+        container.insertBefore(dragSrcEl, e.target);
+        container.insertBefore(e.target, temp);
+        container.removeChild(temp);
+        checkSolved();
+    });
+
+    function checkSolved() {
+        const current = [...container.children];
+        const correct = [...current].sort((a, b) => 
+            a.src.localeCompare(b.src)
+        );
+        const isSolved = current.every((el, i) => el.src === correct[i].src);
+        if (isSolved) {
+            document.getElementById("message").style.display = "block";
+        }
+    }
+</script>
+</body>
+</html>
