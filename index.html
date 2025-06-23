@@ -1,67 +1,35 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-    <meta charset="UTF-8" />
+    <meta charset="UTF-8">
     <title>Sürpriz Puzzle</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body { margin: 0; background: black; color: white; font-family: sans-serif; text-align: center; }
-        #puzzle { display: grid; margin: 10px auto; touch-action: none; grid-template-columns: repeat(5, 64px); grid-gap: 2px; }
-        .piece { width: 64px; height: 64px; touch-action: none; cursor: grab; }
-        @media (min-width: 600px) {
-            #puzzle { grid-template-columns: repeat(5, 96px); grid-gap: 3px; }
-            .piece { width: 96px; height: 96px; }
-        }
+        #puzzle { display: grid; margin: 10px auto; touch-action: none; }
+        .piece { width: 64px; height: 64px; touch-action: none; }
         #message { display: none; margin-top: 20px; font-size: 1.2em; color: #ffcccc; }
-        #shuffleButton {
-            margin: 15px auto;
-            padding: 10px 20px;
-            background: #444;
-            border: none;
-            color: white;
-            font-size: 1.1em;
-            cursor: pointer;
-            border-radius: 6px;
+        @media (min-width: 600px) {
+            .piece { width: 96px; height: 96px; }
         }
     </style>
 </head>
 <body>
     <h2>🧩 Puzzle'ı Tamamla</h2>
-    <button id="shuffleButton">Puzzle'ı Karıştır ve Çözmeye Başla</button>
     <div id="puzzle"></div>
     <div id="message">💌 Bebeğim senden çok özür dilerim umarım bu bir nebze olsun hatamı telafi etmiştir...</div>
-
 <script>
     const size = 5;
     const container = document.getElementById('puzzle');
-    const shuffleButton = document.getElementById('shuffleButton');
-    let pieces = [];
-    let dragSrcEl = null;
-
-    container.style.gridTemplateColumns = `repeat(${size}, auto)`;
-
+    container.style.gridTemplateColumns = repeat(${size}, auto);
+    const pieces = [];
     for (let row = 0; row < size; row++) {
         for (let col = 0; col < size; col++) {
-            pieces.push({ row, col, src: `img/piece_${row}_${col}.png` });
+            pieces.push({ row, col, src: img/piece_${row}_${col}.png });
         }
     }
 
-    // Başlangıçta parçalar sıralı şekilde eklenecek (karışık değil)
-    function renderPieces(arr) {
-        container.innerHTML = '';
-        arr.forEach(({ src }, index) => {
-            const img = document.createElement("img");
-            img.src = src;
-            img.className = "piece";
-            img.draggable = true;
-            img.dataset.index = index;
-            container.appendChild(img);
-        });
-    }
-
-    renderPieces(pieces);
-
-    // Shuffle fonksiyonu
+    // Parçaları karıştır
     function shuffle(array) {
         for (let i = array.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
@@ -69,59 +37,48 @@
         }
     }
 
-    // Drag and Drop eventleri - sadece shuffle sonrası aktif olacak
-    function enableDragAndDrop() {
-        container.addEventListener("dragstart", e => {
-            if (!e.target.classList.contains('piece')) return;
-            dragSrcEl = e.target;
-        });
+    shuffle(pieces);
 
-        container.addEventListener("dragover", e => {
-            e.preventDefault();
-        });
+    pieces.forEach(({ src }, index) => {
+        const img = document.createElement("img");
+        img.src = src;
+        img.className = "piece";
+        img.draggable = true;
+        img.dataset.index = index;
+        container.appendChild(img);
+    });
 
-        container.addEventListener("drop", e => {
-            e.preventDefault();
-            if (!e.target.classList.contains('piece')) return;
+    let dragSrcEl = null;
 
-            if (dragSrcEl === e.target) return;
+    container.addEventListener("dragstart", e => {
+        dragSrcEl = e.target;
+    });
 
-            // Parçaların yerlerini değiştir
-            const children = Array.from(container.children);
-            const dragIndex = children.indexOf(dragSrcEl);
-            const dropIndex = children.indexOf(e.target);
+    container.addEventListener("dragover", e => {
+        e.preventDefault();
+    });
 
-            container.insertBefore(dragSrcEl, e.target);
-            if (dropIndex < dragIndex) {
-                container.insertBefore(e.target, children[dragIndex]);
-            } else {
-                container.insertBefore(e.target, dragSrcEl.nextSibling);
-            }
+    container.addEventListener("drop", e => {
+        e.preventDefault();
+        if (e.target.className !== "piece") return;
+        const temp = document.createElement("div");
+        container.insertBefore(temp, dragSrcEl);
+        container.insertBefore(dragSrcEl, e.target);
+        container.insertBefore(e.target, temp);
+        container.removeChild(temp);
+        checkSolved();
+    });
 
-            checkSolved();
-        });
-    }
-
-    // Puzzle çözüldü mü kontrolü
     function checkSolved() {
         const current = [...container.children];
-        // Doğru sıralı halini bul
-        const correct = [...current].slice().sort((a, b) => a.src.localeCompare(b.src));
+        const correct = [...current].sort((a, b) => 
+            a.src.localeCompare(b.src)
+        );
         const isSolved = current.every((el, i) => el.src === correct[i].src);
         if (isSolved) {
             document.getElementById("message").style.display = "block";
-            shuffleButton.style.display = "none";
         }
     }
-
-    // Buton ile karıştırma ve sürüklemeyi aktif et
-    shuffleButton.addEventListener('click', () => {
-        shuffle(pieces);
-        renderPieces(pieces);
-        enableDragAndDrop();
-        shuffleButton.style.display = 'none';
-    });
-
 </script>
 </body>
 </html>
